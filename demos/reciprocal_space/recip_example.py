@@ -42,25 +42,27 @@
     -> process_grid function.
     
 """
-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function
 import numpy as np
 import numpy.ma as ma
 import os
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
-import nsls2.recip as recip
-import nsls2.core as core
+from skxray import diffraction
 import zipfile
+import six
+import time as ttime
+plt.ion()
+
+if six.PY3:
+    raise Exception("This example does not work on python 3")
 
 
 def recip_ex(detector_size, pixel_size, calibrated_center, dist_sample,
              ub_mat, wavelength, motors, i_stack, H_range, K_range, L_range):
     # convert to Q space
-    q_values = recip.process_to_q(motors, detector_size, pixel_size,
-                                  calibrated_center, dist_sample,
-                                  wavelength, ub_mat)
+    q_values = diffraction.process_to_q(motors, detector_size, pixel_size,
+                                        calibrated_center, dist_sample,
+                                        wavelength, ub_mat)
 
     # minimum and maximum values of the voxel
     q_min = np.array([H_range[0], K_range[0], L_range[0]])
@@ -71,7 +73,8 @@ def recip_ex(detector_size, pixel_size, calibrated_center, dist_sample,
 
     # process the grid values
     (grid_data, grid_occu, std_err,
-     grid_out, bounds) = core.grid3d(q_values, i_stack, dqn[0], dqn[1], dqn[2])
+     grid_out, bounds) = diffraction.grid3d(q_values, i_stack, dqn[0], dqn[1],
+                                            dqn[2])
 
     grid = np.mgrid[0:dqn[0], 0:dqn[1], 0:dqn[2]]
     r = (q_max - q_min) / dqn
@@ -135,8 +138,7 @@ def get_data(X, Y, grid_mask_data, plane):
 
     return i_slice, lx
 
-
-if __name__ == "__main__":
+def run():
     H_range = [-0.270, -0.200]
     K_range = [+0.010, -0.010]
     L_range = [+1.370, +1.410]
@@ -193,11 +195,15 @@ if __name__ == "__main__":
     # path = "LSCO_Nov12_broker"
 
     # intensity of the image stack data
+    folder = os.path.join(*__file__.split(os.sep)[:-1])
     try:
-        i_stack = np.load(os.path.join("LSCO_Nov12_broker", "i_stack.npy"))
+        i_stack = np.load(os.path.join(
+            folder, "LSCO_Nov12_broker", "i_stack.npy"))
     except IOError:
-        zipfile.ZipFile(os.path.join("LSCO_Nov12_broker.zip")).extractall()
-        i_stack = np.load(os.path.join("LSCO_Nov12_broker", "i_stack.npy"))
+        zipfile.ZipFile(os.path.join(
+            folder, "LSCO_Nov12_broker.zip")).extractall()
+        i_stack = np.load(os.path.join(
+            folder, "LSCO_Nov12_broker", "i_stack.npy"))
 
     X, Y, Z, grid_mask_data = recip_ex(detector_size, pixel_size,
                                        calibrated_center, dist_sample,
@@ -211,3 +217,8 @@ if __name__ == "__main__":
 
     plot_slice(x, y, i_slice, lx, H_range, K_range)
     plt.show()
+    ttime.sleep(1)
+
+if __name__ == "__main__":
+    plt.ioff()
+    run()
