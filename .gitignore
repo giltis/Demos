@@ -64,3 +64,15 @@ __MACOSX/
 # ipython notebook stuff
 .ipynb_checkpoints/
 *.npy
+
+# data files
+*.h5
+*.hdf
+*.hdf5
+*.dcm
+*.volume
+*.nc
+*.cdl
+*.tiff
+*.tif
+*.yaml
